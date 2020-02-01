@@ -6,7 +6,7 @@ from tf2_msgs.msg import TFMessage
 
 flag = False
 time_sec = 0
-file = open("./data.txt", 'a')
+file = open("./sklt_Data.txt", 'a')
 
 def sklt_collector():
     rospy.init_node('sklt_collector', anonymous=False)
@@ -29,35 +29,42 @@ def callback(data):
 
         print ("torso")
         print(data.transforms[0].transform.translation)
-        file.write("time\n" + str(time)+ '.'+ str(data.transforms[0].header.stamp.nsecs)+'\n')
-        file.write("torso\n" + str(data.transforms[0].transform.translation)+ '\n')
+        file.write(str(time)+ '.'+ str(data.transforms[0].header.stamp.nsecs))
+        file.write(" (" + str(data.transforms[0].transform.translation.x) + ", " +
+        str(data.transforms[0].transform.translation.y) + ", " + str(data.transforms[0].transform.translation.z) +")")
 
     if (data.transforms[0].child_frame_id == 'left_knee_1') :
         print ("left knee")
         print(data.transforms[0].transform.translation)
-        file.write("left_knee\n" + str(data.transforms[0].transform.translation)+ '\n')
+        file.write(" (" + str(data.transforms[0].transform.translation.x) + ", " +
+        str(data.transforms[0].transform.translation.y) + ", " +str(data.transforms[0].transform.translation.z) +")")
     
     if (data.transforms[0].child_frame_id == 'right_knee_1') :
         print ("right knee : ")
         print(data.transforms[0].transform.translation)
-        file.write("right_knee\n" + str(data.transforms[0].transform.translation)+ '\n')
+        file.write(" (" + str(data.transforms[0].transform.translation.x) + ", " +
+        str(data.transforms[0].transform.translation.y) + ", " +str(data.transforms[0].transform.translation.z) +")")
 
     if (data.transforms[0].child_frame_id == 'left_hip_1') :
         print ("left hip : ")
         print(data.transforms[0].transform.translation)
-        file.write("left_hip\n" + str(data.transforms[0].transform.translation)+ '\n')
+        file.write(" (" + str(data.transforms[0].transform.translation.x) + ", " +
+        str(data.transforms[0].transform.translation.y) + ", " +str(data.transforms[0].transform.translation.z) +")")
     if (data.transforms[0].child_frame_id == 'right_hip_1') :
         print ("right hip : ")
         print(data.transforms[0].transform.translation)
-        file.write("right_hip\n" + str(data.transforms[0].transform.translation)+ '\n')
+        file.write(" (" + str(data.transforms[0].transform.translation.x) + ", " +
+        str(data.transforms[0].transform.translation.y) + ", " +str(data.transforms[0].transform.translation.z) +")")
     if (data.transforms[0].child_frame_id == 'left_foot_1') :
         print ("left foot : ")
         print(data.transforms[0].transform.translation)
-        file.write("left_foot\n" + str(data.transforms[0].transform.translation)+ '\n')
+        file.write(" (" + str(data.transforms[0].transform.translation.x) + ", " +
+        str(data.transforms[0].transform.translation.y) + ", " +str(data.transforms[0].transform.translation.z) +")")
     if (data.transforms[0].child_frame_id == 'right_foot_1') :
         print ("right foot : ")
         print(data.transforms[0].transform.translation)
-        file.write("right_foot\n" + str(data.transforms[0].transform.translation)+ '\n')
+        file.write(" (" + str(data.transforms[0].transform.translation.x) + ", " +
+        str(data.transforms[0].transform.translation.y) + ", " +str(data.transforms[0].transform.translation.z) +")\n")
 
         
 
