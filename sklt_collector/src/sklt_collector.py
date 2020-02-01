@@ -6,7 +6,7 @@ from tf2_msgs.msg import TFMessage
 
 flag = False
 time_sec = 0
-file = open("./sklt_Data6.txt", 'w')
+file = open("./sklt_Data.txt", 'w')
 
 def sklt_collector():
     rospy.init_node('sklt_collector', anonymous=False)
@@ -79,4 +79,3 @@ def callback(data):
 
 if __name__ == '__main__' :
     sklt_collector()
-    
