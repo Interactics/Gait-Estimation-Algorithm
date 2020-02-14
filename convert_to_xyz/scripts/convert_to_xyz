@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+import roslib
+import rospy
+import pyrealsense2 as rs
+import numpy as np
+import cv2
+from openpose_ros_msgs.msg import OpenPoseHumanList
+from openpose_ros_msgs.msg import PointWithProb
+from openpose_ros_msgs.msg import OpenPoseHuman
+from openpose_ros_msgs.msg import BoundingBox
+
+file = open("./test.txt", 'w')
+
+height1 = 480
+width1 = 640
+
+pipeline = rs.pipeline()
+config = rs.config()
+config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+pipeline.start(config)
+
+def getVerticalCoordinate(y, distance):
+    #rs RGB : FOV 69.4 x 42.5 x 77 (HxVxD)
+    #rs Depth : FOV 73 x 58 x 95 (HxVxD)
+    VFov2 = math.radians(42.5/2)
+    VSize = math.tan(VFov2) * 2
+    VCenter = (height1-1)/2
+    VPixel = VSize/(height1 - 1)
+    VRatio = (VCenter - y) * VPixel
+    return distance * VRatio
+
+def getHorizontalCoordinate(x, distance):
+    #rs RGB : FOV 69.4 x 42.5 x 77 (HxVxD)
+    #rs Depth : FOV 73 x 58 x 95 (HxVxD)
+    HFov2 = math.radians(64.4/2)
+    HSize = math.tan(HFov2) * 2
+    HCenter = (width1-1)/2
+    HPixel = VSize/(width1 - 1)
+    HRatio = (x - Hcenter) * VPixel
+    return distance * HRatio
+
+
+def convert_to_xyz():
+    while(True) :
+        frames = pipeline.wait_for_frames()
+        align_to = rs.stream.color
+        align = rs.align(align_to)
+        aligned_frames = align.process(frames)
+        depth_frame = aligned_frames.get_depth_frame()
+        color_frame = aligned_frames.get_color_frame()
+        depth_image = np.asanyarray(depth_frame.get_data())
+        color_image = np.asanyarray(color_frame.get_data())
+
+        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha = 0.03), cv2.COLORMAP_JET)
+        images = np.hstack((color_image, depth_colormap))
+
+        cv2.imshow('rs', images)
+        cv2.waitKey(1)
+
+    rospy.init_node('convert_to_xyz', anonymous=False)
+    rospy.Subscriber("/openpose_ros/human_list", OpenPoseHumanList,callback)
+
+    rospy.spin()
+
+def callback(data):
+    #rospy.loginfo("Pose : %s", data)
+    # global flag, time_sec
+    # if (flag == False) :
+    #     time_sec = data.transforms[0].header.stamp.secs
+    #     flag = True
+
+    # time = data.transforms[0].header.stamp.secs - time_sec
+
+    print (data.human_list)
+    file.write(str(data.human_list[0].body_key_points_with_prob))
+
+if __name__ == '__main__' :
+    convert_to_xyz()
