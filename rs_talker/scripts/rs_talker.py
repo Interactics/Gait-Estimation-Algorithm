@@ -23,6 +23,10 @@ def talker() :
     depth_sensor = profile.get_device().first_depth_sensor()
     depth_scale = depth_sensor.get_depth_scale()
 
+    #removing background setting
+    clipping_distance_in_meters = 2 #1 meter
+    clipping_distance = clipping_distance_in_meters / depth_scale
+
     #aligning image
     align_to = rs.stream.color
     align = rs.align(align_to)
@@ -51,8 +55,15 @@ def talker() :
             color_image = np.asanyarray(color_frame.get_data())
             depth_image = np.asanyarray(aligned_depth_frame.get_data())
 
+            #remove background
+            grey_color = 153
+            depth_image_3d = np.dstack((depth_image,depth_image,depth_image)) #depth image is 1 channel, color is 3 channels
+            bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), grey_color, color_image)
+
             
-            imgMsgCol = cobridge.cv2_to_imgmsg(color_image, encoding="bgr8")
+            #removed img
+            imgMsgCol = cobridge.cv2_to_imgmsg(bg_removed, encoding="bgr8")
+            #imgMsgCol = cobridge.cv2_to_imgmsg(color_image, encoding="bgr8")
             imgMsgDep = debridge.cv2_to_imgmsg(depth_image, encoding="16UC1")
 
             colorPub.publish(imgMsgCol)
