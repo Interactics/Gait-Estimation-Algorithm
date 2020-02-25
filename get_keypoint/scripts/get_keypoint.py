@@ -58,23 +58,32 @@ def callback1(data) :
 
     # print (pointDepthXYZ(keypointList, 0))
 
-
 #LegKeypoint Detecting and Printing.
 def printLegPoint(keyPoint, timeInfo) :
     TIME = timeWriter(timeInfo)
+
     MidHip = pointDepthXYZ(keyPoint, 8)
+
     RHip = pointDepthXYZ(keyPoint, 9)
     RKnee = pointDepthXYZ(keyPoint, 10)
     RAnkle = pointDepthXYZ(keyPoint, 11)
+
     LHip = pointDepthXYZ(keyPoint, 12)
     LKnee = pointDepthXYZ(keyPoint, 13)
     LAnkle = pointDepthXYZ(keyPoint, 14)
-     
 
-    dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
-        str(MidHip) + ' ' + str(MidHip) + ' ' + str(RHip) + ' ' + \
+
+
+## Selecting Left Leg
+    if (RKnee[2] <= LKnee[2]) : 
+        dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
         str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
         str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + '\n'
+
+    if (RKnee[2] > LKnee[2]) :
+        dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + \
+        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + '\n'
 
     file.write(dataStr)
 
@@ -117,7 +126,6 @@ def pointDepthXYZ(keypointList, n_body) :
 
     return int(x_pt), int(y_pt), dist
 
-
 #inputing DepthImg    
 def callback2(img_msg) :
     global img_np
@@ -155,11 +163,13 @@ def getCoord(x,y,distance):
 def getVerticalCoordinate(y, distance):
     #rs RGB : FOV 69.4 x 42.5 x 77 (HxVxD)
     #rs Depth : FOV 73 x 58 x 95 (HxVxD)
+
     VFov2 = math.radians(42.5/2)
     VSize = math.tan(VFov2) * 2
     VCenter = (height1-1)/2
     VPixel = VSize/(height1 - 1)
     VRatio = (VCenter - y) * VPixel
+
     return distance * VRatio
 
 def getHorizontalCoordinate(x, distance):
