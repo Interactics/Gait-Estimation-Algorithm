@@ -22,7 +22,7 @@ width1 = 640
 # {5,  "LShoulder"},
 # {6,  "LElbow"},
 # {7,  "LWrist"},
-# {8,  "MidHip"},
+# {8,  "MidHip"},    <-
 # {9,  "RHip"},      <-
 # {10, "RKnee"},     <-
 # {11, "RAnkle"},    <-
@@ -41,14 +41,72 @@ width1 = 640
 # {24, "RHeel"},
 # {25, "Background"}
 
-
+Time_flag = False
+time_sec = 0
 global img_np
 
-def callback1(data) :
-    keypointList = data.human_list[0].body_key_points_with_prob
-    print (point_to_depth(keypointList, 0))
+file = open("./skltData.txt", 'w')
 
-def point_to_depth(keypointList, n_body) :
+def callback1(data) :
+    try:
+        keypointList = data.human_list[0].body_key_points_with_prob
+        timeInfo = data.header.stamp
+        print(pointDepthXYZ(keypointList, 0))
+        print(printLegPoint(keypointList,timeInfo))
+    except:
+        print('nobody keypoint detected')
+
+    # print (pointDepthXYZ(keypointList, 0))
+
+
+#LegKeypoint Detecting and Printing.
+def printLegPoint(keyPoint, timeInfo) :
+    TIME = timeWriter(timeInfo)
+    MidHip = pointDepthXYZ(keyPoint, 8)
+    RHip = pointDepthXYZ(keyPoint, 9)
+    RKnee = pointDepthXYZ(keyPoint, 10)
+    RAnkle = pointDepthXYZ(keyPoint, 11)
+    LHip = pointDepthXYZ(keyPoint, 12)
+    LKnee = pointDepthXYZ(keyPoint, 13)
+    LAnkle = pointDepthXYZ(keyPoint, 14)
+     
+
+    dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+        str(MidHip) + ' ' + str(MidHip) + ' ' + str(RHip) + ' ' + \
+        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
+        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + '\n'
+
+    file.write(dataStr)
+
+# Returning Time of system's running.
+    
+
+def timeWriter(timeInfo) : 
+    global Time_flag, time_sec
+    timeStr = ''
+
+    #Setting 0sec
+    if (Time_flag == False) :
+        time_sec = timeInfo.secs
+        Time_flag = True
+    time = timeInfo.secs - time_sec  
+
+    #Solve nsecs err.
+    time_size = len(str(timeInfo.nsecs))
+    if time_size < 9 :
+        for i in range(0,9-time_size):
+            #file.write(str('0'))
+            timeStr = '0' + timeStr
+        timeStr = timeStr + str(timeInfo.nsecs)
+    else :
+        timeStr = str(timeInfo.nsecs)
+    
+    timeStr = str(time)+ '.' + timeStr
+
+    return timeStr
+
+
+def pointDepthXYZ(keypointList, n_body) :
     global img_np
 
     x_pix = keypointList[n_body].x
@@ -59,7 +117,8 @@ def point_to_depth(keypointList, n_body) :
 
     return int(x_pt), int(y_pt), dist
 
-    
+
+#inputing DepthImg    
 def callback2(img_msg) :
     global img_np
 
