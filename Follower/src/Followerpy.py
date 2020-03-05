@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from  std_msgs.msg import Float32
+from std_msgs.msg import Float32
 from openpose_ros_msgs.msg import BoundingBox
 from openpose_ros_msgs.msg import OpenPoseHuman
 from openpose_ros_msgs.msg import OpenPoseHumanList
@@ -37,7 +37,12 @@ from openpose_ros_msgs.msg import PointWithProb
 Dist = 0.0
 Data_receving = False
 
+#rospy.Subscriber("/openpose_ros/human_list", OpenPoseHumanList, callback)
+#Spd_Robot = rospy.Publisher("get_speed", Float32, queue_size = 1)
+global Spd_Robot
+
 def callback (msg) :
+    global Spd_Robot
     try:
         Dist = msg.human_list[0].body_key_points_with_prob[10].x
     except :
@@ -46,22 +51,24 @@ def callback (msg) :
     spd = speedOfRobot(Dist)
     Spd_Robot.publish(spd)
 
-rospy.Subscriber("/openpose_ros/human_list", OpenPoseHumanList, callback)
-Spd_Robot = rospy.Publisher("get_speed", Float32, queue_size = 1)
 
 def speedOfRobot(d) : 
-    speed = 0
-    if (d <= 0 ) :
-        return 0
-    speed = ( 320 - d ) / 160 
+    speed = 1.2
+    # if (d <= 0 ) :
+    #     return 0
+    # speed = ( 320 - d ) / 160 
 
     if (speed < 0) :
         speed = 0
     return speed
 
 def main() :
+    global Spd_Robot
     rospy.init_node('Follower', anonymous = False)
     rospy.loginfo('Follower Node Start')
+
+    rospy.Subscriber("/openpose_ros/human_list", OpenPoseHumanList, callback)
+    Spd_Robot = rospy.Publisher("get_speed", Float32, queue_size = 1)
 
     rospy.Rate(10)
     rospy.spin()

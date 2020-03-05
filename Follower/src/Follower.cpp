@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 #include "std_msgs/Float32.h"
 
-#include "openpose_ros_msgs/BoudingBox.h"
+#include "openpose_ros_msgs/BoundingBox.h"
 #include "openpose_ros_msgs/OpenPoseHuman.h"
 #include "openpose_ros_msgs/OpenPoseHumanList.h"
 #include "openpose_ros_msgs/PointWithProb.h"
