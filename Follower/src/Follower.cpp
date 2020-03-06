@@ -23,7 +23,7 @@ public:
     void PubSpd();
 };
 
-//Class Method Define
+//Define Class Method 
 SpdCtrl::SpdCtrl(ros::NodeHandle* nh){
     Follow  = nh -> subscribe("distance_msg", 1, &SpdCtrl::Callback, this);
     Spd_Robot = nh -> advertise<std_msgs::Float32>("SPD", 1);
