@@ -1,4 +1,36 @@
 #!/usr/bin/env python
+
+#################### KeyPoint Data #########################
+###                   [0] = Nose                         ###
+###                   [1] = Neck                         ###
+###                   [2] = RShoulder                    ###
+###                   [3] = RElbow                       ###
+###                   [4] = RWrist                       ###
+###                   [5] = LShoulder                    ###
+###                   [6] = LElbow                       ###
+###                   [7] = LWrist                       ###
+###                   [8] = MidHip                       ###
+###              (v)  [9] = RHip                         ###
+###              (v) [10] = RKnee                        ###
+###              (v) [11] = RAnkle                       ###
+###              (v) [12] = LHip"                        ###
+###              (v) [13] = LKnee                        ###
+###              (v) [14] = LAnkle                       ###
+###                  [15] = REye                         ###
+###                  [16] = LEye                         ###
+###                  [17] = REar                         ###
+###                  [18] = LEar                         ###
+###                  [19] = LBigToe                      ###
+###                  [20] = LSmallToe                    ###
+###                  [21] = LHeel                        ###
+###                  [22] = RBigToe                      ###
+###                  [23] = RSmallToe                    ###
+###                  [24] = RHeel                        ###
+###                  [25] = Background                   ###
+############################################################
+
+import os
+
 ## ROS
 import roslib
 import rospy
@@ -15,8 +47,8 @@ import numpy as np
 import cv2
 import math
 
-import tensorflow as tf
 ## Machine Learning
+import tensorflow as tf
 import keras
 import keras.backend as K 
 
@@ -26,61 +58,29 @@ from keras.layers import Dense
 from keras.layers import Flatten
 from keras.models import load_model
 from keras.models import model_from_json
+from keras.backend import set_session
+from sklearn.preprocessing import MinMaxScaler
 
-#Filter
+## Filter
 from scipy import signal
 
+### LSTM Model call ###
 
-# from tensorflow.python.keras.backend import set_session
-
-
-# sess = tf.Session()
-# graph = tf.get_default_graph()
-
-# set_session(sess)
-
-
-print('--Program Online--')
-# global graph,model
-# graph = tf.get_default_graph()
-
-# session = keras.backend.get_session()
-# init = tf.global_variables_initializer()
-# session.run(init)
-
-# K.clear_session()
-# model = Sequential() # Sequeatial Model 
-# model.add(LSTM(70, input_shape=(30, 1))) # (timestep, feature)
-# model.add(Dense(1)) # output = 1 
-# model.compile(loss='mean_squared_error', optimizer='adam')
-
-# print('--modle loading--')
-# json_file = open("/home/wowmecha/Desktop/model100.json", "r")
-# loaded_model_json = json_file.read() 
-# json_file.close() 
-# model = model_from_json(loaded_model_json)
-
-# model.load_weights('/home/wowmecha/Desktop/Gait_LSTM_NODE12_70model100W.h5')
-# model.compile(loss='mean_squared_error', optimizer='adam')
-# print(model.summary())
-# model._make_predict_function()
-# print('--KERAS Model is loaded--')
-
-## LSTM Model Setting
 global graph
 global sess
-sess = tf.Session()
-from keras.backend import set_session
 
+sess = tf.Session()
 graph = tf.get_default_graph()  
 set_session(sess)
-model = load_model('/home/wowmecha/Desktop/Gait_LSTM_NODE12_70model100.h5')
+
+MODELFILE = os.path.dirname(os.path.realpath(__file__)) +'/../config/Gait_LSTM_model.h5'
+model = load_model(MODELFILE)
 model.compile(loss='mean_squared_error', optimizer='adam')
 
 print(model.summary())
 
-### Scaler setting
-from sklearn.preprocessing import MinMaxScaler
+### Scaler SETTING ###
+
 sc_x = MinMaxScaler(feature_range=(0, 1))
 sc_y = MinMaxScaler(feature_range=(0, 1))
 Xsc_ = [[76.68918234,   67.08620117, -1496.91313308],
@@ -89,43 +89,16 @@ Ysc_ = [[-2.24800694],
         [4.12432266]]
 sc_x.fit(np.array(Xsc_))
 sc_y.fit(np.array(Ysc_))
-###
+
+### Size of Image ###
 
 height1 = 480
 width1 = 640
 
-# {0,  "Nose"},
-# {1,  "Neck"},
-# {2,  "RShoulder"},
-# {3,  "RElbow"},
-# {4,  "RWrist"},
-# {5,  "LShoulder"},
-# {6,  "LElbow"},
-# {7,  "LWrist"},
-# {8,  "MidHip"},    <-
-# {9,  "RHip"},      <-
-# {10, "RKnee"},     <-
-# {11, "RAnkle"},    <-
-# {12, "LHip"},      <-
-# {13, "LKnee"},     <- 
-# {14, "LAnkle"},    <-
-# {15, "REye"},
-# {16, "LEye"},
-# {17, "REar"},
-# {18, "LEar"},
-# {19, "LBigToe"},
-# {20, "LSmallToe"},
-# {21, "LHeel"},
-# {22, "RBigToe"},
-# {23, "RSmallToe"},
-# {24, "RHeel"},
-# {25, "Background"}
-
 Time_flag = False
 time_sec = 0
-global img_np
 firstCheck = True
-
+global img_np
 global PubSpd
 global theta_leftknee_prev
 global time_now
@@ -136,13 +109,13 @@ global data_vel
 file = open("./skltData.txt", 'w')
 
 def callback1(data) :
-    #try:
+    try:
         keypointList = data.human_list[0].body_key_points_with_prob
         timeInfo = data.header.stamp
         pointDepthXYZ(keypointList, 0)
         printLegPoint(keypointList,timeInfo)
-    #except:
-        #print('nobody keypoint detected')
+    except:
+        print('OOPS! No man is detected!')
 
     # print (pointDepthXYZ(keypointList, 0))
 
@@ -154,18 +127,15 @@ def printLegPoint(keyPoint, timeInfo) :
     global time_prev
     global data_pred
     global data_vel
-
     
+
+    ### Size of LSTM data Stream
     node_size = 12
     
     time_now = timeWriter(timeInfo)
-    TIME = time_now
     time_now = float(time_now)
-    MidHip = pointDepthXYZ(keyPoint, 8)
 
-    RHip = pointDepthXYZ(keyPoint, 9)
-    RKnee = pointDepthXYZ(keyPoint, 10)
-    RAnkle = pointDepthXYZ(keyPoint, 11)
+    TIME = time_now
 
     LHip = pointDepthXYZ(keyPoint, 12)
     LKnee = pointDepthXYZ(keyPoint, 13)
@@ -173,13 +143,6 @@ def printLegPoint(keyPoint, timeInfo) :
     
     if (firstCheck == True) :
         time_prev = 0
-        prev_MidHip = MidHip
-        prev_RHip = RHip
-        prev_RKnee = RKnee
-        prev_RAnkle = RAnkle
-        prev_LHip = LHip
-        prev_LKnee = LKnee
-        prev_LAnkle = LAnkle
         firstCheck = False
         theta_leftknee_prev = 0
         data_pred = np.array([])
@@ -187,9 +150,8 @@ def printLegPoint(keyPoint, timeInfo) :
         
     if ( -1000 < LHip[0] < 1000 and -1000 < LAnkle[0] < 1000 )  :
 
-        ###
-        ###theta of LeftKnee
-        ###
+        ### theta of LeftKnee ###
+
         left_shin_x     = int(LAnkle[0]) - int(LKnee[0])
         left_shin_y     = int(LAnkle[1]) - int(LKnee[1])
         left_shin_z     = int(LAnkle[2]) - int(LKnee[2])
@@ -203,9 +165,7 @@ def printLegPoint(keyPoint, timeInfo) :
 
         theta_leftknee = np.arccos(costheta_left) / np.pi * 180
 
-        ###
-        ### Theta of LeftShin to ground
-        ###
+        ### Theta of LeftShin to ground ###
                 
         shin_x = -left_shin_x
         shin_y = -left_shin_y
@@ -216,23 +176,14 @@ def printLegPoint(keyPoint, timeInfo) :
 
         theta_shin_vs_ground = np.arccos(costheta_Knee_vs_ground) / np.pi * 180
 
-        ###
-        ### Make Angle velocity of knee
-        ###
-
+        ### Make Angle velocity of knee ###
 
         velocity_knee_left =  (theta_leftknee - theta_leftknee_prev) / (time_now - time_prev)
-
-
-        ###
-        ### prev declare
-        ### 
 
         time_prev = time_now
         theta_leftknee_prev = theta_leftknee
 
         data_arr = np.array([theta_leftknee, theta_shin_vs_ground, velocity_knee_left])
-        print(data_arr)
         data_arr = sc_x.transform(data_arr.reshape((1,3))).squeeze()
         data_pred = np.hstack([data_pred, data_arr])
 
@@ -246,46 +197,31 @@ def printLegPoint(keyPoint, timeInfo) :
                 set_session(sess)
                 velocity = (model.predict(INPUT_D))
             velocity = sc_y.inverse_transform(velocity)[0,0]
-            print('----')
-            print(velocity)
 
             data_pred = data_pred[3:]
             data_vel = np.hstack([data_vel, velocity])
 
+            ### Butterworth Filter ###
+            
             if (data_vel.shape[0] >= 13) : 
                 b, a = signal.butter(3, 0.01) ## Butterworth Filter 
                 filterd_y = signal.filtfilt(b, a, data_vel) ## Filter
-                filterd_y1 = signal.filtfilt(b, a, data_vel[-13:]) ## Filter
+                filterd_y1 = signal.filtfilt(b, a, data_vel[-13:]) ## Filtering with last 13 data
 
                 speed = filterd_y[-1]
                 #data_vel = data_vel[:-1]
-                print('Filtered Speed: ', speed)
-                print('Filtered Speed: ', filterd_y1[-1])
+                print("Filtered Speed(LAST 12)  : ", speed)
+                print("Filtered Speed(FULL DATA): ", filterd_y1[-1])
 
                 PubSpd.publish(speed)
                             
+
+
     # dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
     # str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
-    # str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + str(mSPD) + '\n'
+    # str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' '  + '\n'
 
-    dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
-    str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
-    str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' '  + '\n'
-
-## Selecting Left Leg
-    # if (RKnee[2] <= LKnee[2]) : 
-    #     dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
-    #     str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
-    #     str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + '\n'
-
-    # if (RKnee[2] > LKnee[2]) :
-    #     dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
-    #     str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + \
-    #     str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + '\n'
-
-    file.write(dataStr)
-
-# Returning Time of system's running.
+    # file.write(dataStr)
     
 
 def timeWriter(timeInfo) : 
@@ -334,14 +270,13 @@ def callback2(img_msg) :
     ## type : numpy.ndarray
     depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(img_np, alpha = 0.03), cv2.COLORMAP_JET)
     
-    cv2.imshow('rs', depth_colormap)
+    #cv2.imshow('rs', depth_colormap)
     cv2.waitKey(1)
-
 
 def get_keypoint() :
     global PubSpd
     rospy.init_node('get_keypoint', anonymous = False)
-    rospy.Subscriber("/openpose_ros/human_list", OpenPoseHumanList,callback1)
+    rospy.Subscriber("/openpose_ros/human_list", OpenPoseHumanList, callback1)
     rospy.Subscriber("depth_image", Image, callback2)
     PubSpd = rospy.Publisher("get_speed", Float32, queue_size=1)
     
@@ -352,7 +287,7 @@ def msg_to_numpy(data):
         try:
             raw_img = bridge.imgmsg_to_cv2(data, "16UC1")
         except CvBridgeError as err:
-            print("err")
+            print("CV_bridge ERR!")
 
         return raw_img 
 
@@ -376,13 +311,13 @@ def getVerticalCoordinate(y, distance):
 def getHorizontalCoordinate(x, distance):
     #rs RGB : FOV 69.4 x 42.5 x 77 (HxVxD)
     #rs Depth : FOV 73 x 58 x 95 (HxVxD)
+
     HFov2 = math.radians(64.4/2)
     HSize = math.tan(HFov2) * 2
     HCenter = (width1-1)/2
     HPixel = HSize/(width1 - 1)
     HRatio = (x - HCenter) * HPixel
     return distance * HRatio
-
 
 if __name__ == '__main__' :
     get_keypoint()
