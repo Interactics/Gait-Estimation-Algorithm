@@ -6,6 +6,7 @@ import cv2
 import math
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
+from std_msgs.msg import Float32
 from openpose_ros_msgs.msg import OpenPoseHumanList
 from openpose_ros_msgs.msg import PointWithProb
 from openpose_ros_msgs.msg import OpenPoseHuman
@@ -44,8 +45,10 @@ width1 = 640
 Time_flag = False
 time_sec = 0
 global img_np
+mSPD = 0
 
 file = open("./skltData.txt", 'w')
+file2 = open("./skltCtrlData.txt", 'w')
 
 def callback1(data) :
     try:
@@ -57,6 +60,12 @@ def callback1(data) :
         print('nobody keypoint detected')
 
     # print (pointDepthXYZ(keypointList, 0))
+
+def spdCB(data) :
+    global mSPD
+
+    mSPD = data
+    print('speed is not detected')
 
 #LegKeypoint Detecting and Printing.
 def printLegPoint(keyPoint, timeInfo) :
@@ -73,19 +82,25 @@ def printLegPoint(keyPoint, timeInfo) :
     LAnkle = pointDepthXYZ(keyPoint, 14)
 
 
+    dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+    str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
+    str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + str(mSPD) + '\n'
+
 
 ## Selecting Left Leg
     if (RKnee[2] <= LKnee[2]) : 
-        dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+        dataStr2 = str(TIME) + ' ' + str(MidHip) + ' ' + \
         str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
-        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + '\n'
+        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + str(mSPD) + '\n'
 
     if (RKnee[2] > LKnee[2]) :
-        dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+        dataStr2 = str(TIME) + ' ' + str(MidHip) + ' ' + \
         str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + \
-        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + '\n'
+        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + str(mSPD) + '\n'
 
     file.write(dataStr)
+    file2.write(dataStr2) ## Controled
+
 
 # Returning Time of system's running.
     
@@ -144,6 +159,8 @@ def get_keypoint() :
     rospy.init_node('get_keypoint', anonymous = False)
     rospy.Subscriber("/openpose_ros/human_list", OpenPoseHumanList,callback1)
     rospy.Subscriber("depth_image", Image, callback2)
+    rospy.Subscriber("/m_speed", Float32, spdCB)
+
     rospy.spin()
 
 def msg_to_numpy(data):

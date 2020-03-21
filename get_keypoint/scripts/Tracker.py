@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-## ROS
+
 import roslib
 import rospy
 from cv_bridge import CvBridge, CvBridgeError
@@ -120,12 +120,12 @@ def printLegPoint(keyPoint, timeInfo) :
         right_shin_x    = RAnkle[0] - RKnee[0]
         right_shin_y    = RAnkle[1] - RKnee[1]
         right_shin_z    = RAnkle[2] - RKnee[2]
-        left_thigh_x    =   LHip[0] - LKnee_x[0]
-        left_thigh_y    =   LHip[1] - LKnee_y[1]
-        left_thigh_z    =   LHip[2] - LKnee_z[2]
-        right_thigh_x   =   RHip[0] - RKnee_x[0]
-        right_thigh_y   =   RHip[1] - RKnee_y[1]
-        right_thigh_z   =   RHip[2] - RKnee_z[2]
+        left_thigh_x    =   LHip[0] - LKnee[0]
+        left_thigh_y    =   LHip[1] - LKnee[1]
+        left_thigh_z    =   LHip[2] - LKnee[2]
+        right_thigh_x   =   RHip[0] - RKnee[0]
+        right_thigh_y   =   RHip[1] - RKnee[1]
+        right_thigh_z   =   RHip[2] - RKnee[2]
 
         costheta_left = ((left_shin_x * left_thigh_x) + (left_shin_y * left_thigh_y) + (left_shin_z * left_thigh_z)) / (np.sqrt(left_shin_x**2 + left_shin_y**2 + left_shin_z**2) * np.sqrt(left_thigh_x**2 + left_thigh_y**2 + left_thigh_z**2)) 
 
@@ -175,15 +175,18 @@ def printLegPoint(keyPoint, timeInfo) :
                             
                     
 ## Selecting Left Leg
-    if (RKnee[2] <= LKnee[2]) : 
-        dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
-        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
-        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + '\n'
+    # if (RKnee[2] <= LKnee[2]) : 
+    #     dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+    #     str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
+    #     str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + '\n'
 
-    if (RKnee[2] > LKnee[2]) :
-        dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
-        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + \
-        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + '\n'
+    # if (RKnee[2] > LKnee[2]) :
+    #     dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+    #     str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + \
+    #     str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + '\n'
+    dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+    str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
+    str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + str(mSPD) + '\n'
 
     file.write(dataStr)
 

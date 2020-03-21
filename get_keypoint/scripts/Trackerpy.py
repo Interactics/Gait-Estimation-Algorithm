@@ -15,16 +15,81 @@ import numpy as np
 import cv2
 import math
 
+import tensorflow as tf
 ## Machine Learning
 import keras
+import keras.backend as K 
+
 from keras.layers import LSTM 
 from keras.models import Sequential 
 from keras.layers import Dense 
 from keras.layers import Flatten
 from keras.models import load_model
+from keras.models import model_from_json
 
 #Filter
 from scipy import signal
+
+
+# from tensorflow.python.keras.backend import set_session
+
+
+# sess = tf.Session()
+# graph = tf.get_default_graph()
+
+# set_session(sess)
+
+
+print('--Program Online--')
+# global graph,model
+# graph = tf.get_default_graph()
+
+# session = keras.backend.get_session()
+# init = tf.global_variables_initializer()
+# session.run(init)
+
+# K.clear_session()
+# model = Sequential() # Sequeatial Model 
+# model.add(LSTM(70, input_shape=(30, 1))) # (timestep, feature)
+# model.add(Dense(1)) # output = 1 
+# model.compile(loss='mean_squared_error', optimizer='adam')
+
+# print('--modle loading--')
+# json_file = open("/home/wowmecha/Desktop/model100.json", "r")
+# loaded_model_json = json_file.read() 
+# json_file.close() 
+# model = model_from_json(loaded_model_json)
+
+# model.load_weights('/home/wowmecha/Desktop/Gait_LSTM_NODE12_70model100W.h5')
+# model.compile(loss='mean_squared_error', optimizer='adam')
+# print(model.summary())
+# model._make_predict_function()
+# print('--KERAS Model is loaded--')
+
+## LSTM Model Setting
+global graph
+global sess
+sess = tf.Session()
+from keras.backend import set_session
+
+graph = tf.get_default_graph()  
+set_session(sess)
+model = load_model('/home/wowmecha/Desktop/Gait_LSTM_NODE12_70model100.h5')
+model.compile(loss='mean_squared_error', optimizer='adam')
+
+print(model.summary())
+
+### Scaler setting
+from sklearn.preprocessing import MinMaxScaler
+sc_x = MinMaxScaler(feature_range=(0, 1))
+sc_y = MinMaxScaler(feature_range=(0, 1))
+Xsc_ = [[76.68918234,   67.08620117, -1496.91313308],
+        [ 178.85618721, 152.72581815, 1201.76893437]]
+Ysc_ = [[-2.24800694], 
+        [4.12432266]]
+sc_x.fit(np.array(Xsc_))
+sc_y.fit(np.array(Ysc_))
+###
 
 height1 = 480
 width1 = 640
@@ -62,28 +127,39 @@ global img_np
 firstCheck = True
 
 global PubSpd
-
+global theta_leftknee_prev
+global time_now
+global time_prev
+global data_pred
+global data_vel
 
 file = open("./skltData.txt", 'w')
 
 def callback1(data) :
-    try:
+    #try:
         keypointList = data.human_list[0].body_key_points_with_prob
         timeInfo = data.header.stamp
-        print(pointDepthXYZ(keypointList, 0))
-        print(printLegPoint(keypointList,timeInfo))
-    except:
-        print('nobody keypoint detected')
+        pointDepthXYZ(keypointList, 0)
+        printLegPoint(keypointList,timeInfo)
+    #except:
+        #print('nobody keypoint detected')
 
     # print (pointDepthXYZ(keypointList, 0))
 
 #LegKeypoint Detecting and Printing.
 def printLegPoint(keyPoint, timeInfo) :
     global firstCheck
+    global theta_leftknee_prev
+    global time_now
+    global time_prev
+    global data_pred
+    global data_vel
+
     
-    node_size = 10
+    node_size = 12
     
     time_now = timeWriter(timeInfo)
+    TIME = time_now
     time_now = float(time_now)
     MidHip = pointDepthXYZ(keyPoint, 8)
 
@@ -96,7 +172,7 @@ def printLegPoint(keyPoint, timeInfo) :
     LAnkle = pointDepthXYZ(keyPoint, 14)
     
     if (firstCheck == True) :
-        time_prev = time_now
+        time_prev = 0
         prev_MidHip = MidHip
         prev_RHip = RHip
         prev_RKnee = RKnee
@@ -105,34 +181,28 @@ def printLegPoint(keyPoint, timeInfo) :
         prev_LKnee = LKnee
         prev_LAnkle = LAnkle
         firstCheck = False
-        
+        theta_leftknee_prev = 0
         data_pred = np.array([])
         data_vel = np.array([])
         
     if ( -1000 < LHip[0] < 1000 and -1000 < LAnkle[0] < 1000 )  :
-        
+
         ###
-        ###theta of Right and LeftKnee
+        ###theta of LeftKnee
         ###
-        left_shin_x     = LAnkle[0] - LKnee[0]
-        left_shin_y     = LAnkle[1] - LKnee[1]
-        left_shin_z     = LAnkle[2] - LKnee[2]
-        right_shin_x    = RAnkle[0] - RKnee[0]
-        right_shin_y    = RAnkle[1] - RKnee[1]
-        right_shin_z    = RAnkle[2] - RKnee[2]
-        left_thigh_x    =   LHip[0] - LKnee_x[0]
-        left_thigh_y    =   LHip[1] - LKnee_y[1]
-        left_thigh_z    =   LHip[2] - LKnee_z[2]
-        right_thigh_x   =   RHip[0] - RKnee_x[0]
-        right_thigh_y   =   RHip[1] - RKnee_y[1]
-        right_thigh_z   =   RHip[2] - RKnee_z[2]
+        left_shin_x     = int(LAnkle[0]) - int(LKnee[0])
+        left_shin_y     = int(LAnkle[1]) - int(LKnee[1])
+        left_shin_z     = int(LAnkle[2]) - int(LKnee[2])
+        left_thigh_x    =   int(LHip[0]) - int(LKnee[0])
+        left_thigh_y    =   int(LHip[1]) - int(LKnee[1])
+        left_thigh_z    =   int(LHip[2]) - int(LKnee[2])
 
-        costheta_left = ((left_shin_x * left_thigh_x) + (left_shin_y * left_thigh_y) + (left_shin_z * left_thigh_z)) / (np.sqrt(left_shin_x**2 + left_shin_y**2 + left_shin_z**2) * np.sqrt(left_thigh_x**2 + left_thigh_y**2 + left_thigh_z**2)) 
+        costheta_left = \
+            ((left_shin_x * left_thigh_x) + (left_shin_y * left_thigh_y) + (left_shin_z * left_thigh_z)) / \
+            (np.sqrt(left_shin_x**2 + left_shin_y**2 + left_shin_z**2) * np.sqrt(left_thigh_x**2 + left_thigh_y**2 + left_thigh_z**2)) 
 
-
-        #calculate theta of knee 
         theta_leftknee = np.arccos(costheta_left) / np.pi * 180
-        
+
         ###
         ### Theta of LeftShin to ground
         ###
@@ -149,41 +219,69 @@ def printLegPoint(keyPoint, timeInfo) :
         ###
         ### Make Angle velocity of knee
         ###
-        
-        velocity_knee_left =  theta_leftknee - theta_leftknee_prev / time -time_prev
-        
+
+
+        velocity_knee_left =  (theta_leftknee - theta_leftknee_prev) / (time_now - time_prev)
+
+
         ###
         ### prev declare
         ### 
-        
+
         time_prev = time_now
         theta_leftknee_prev = theta_leftknee
-        data_pred = np.hstack([data_pred, [theta_leftknee, theta_shin_vs_ground, velocity_knee_left]])
-        
-        if (date_pred.shape[0] == node_size * 3) :
-            data_pred.reshape(1,node_size * 3, 1) ## reshape Size for LSTM
-            velocity = model.predict(data)
-            
+
+        data_arr = np.array([theta_leftknee, theta_shin_vs_ground, velocity_knee_left])
+        print(data_arr)
+        data_arr = sc_x.transform(data_arr.reshape((1,3))).squeeze()
+        data_pred = np.hstack([data_pred, data_arr])
+
+        if (data_pred.shape[0] == node_size * 3) :
+
+            INPUT_D = data_pred.reshape((1, node_size * 3, 1))
+
+            global graph
+            global sess
+            with graph.as_default():  
+                set_session(sess)
+                velocity = (model.predict(INPUT_D))
+            velocity = sc_y.inverse_transform(velocity)[0,0]
+            print('----')
+            print(velocity)
+
             data_pred = data_pred[3:]
             data_vel = np.hstack([data_vel, velocity])
-            
-            if (data_vel.shape[0] == 3) : 
+
+            if (data_vel.shape[0] >= 13) : 
                 b, a = signal.butter(3, 0.01) ## Butterworth Filter 
                 filterd_y = signal.filtfilt(b, a, data_vel) ## Filter
+                filterd_y1 = signal.filtfilt(b, a, data_vel[-13:]) ## Filter
+
                 speed = filterd_y[-1]
+                #data_vel = data_vel[:-1]
+                print('Filtered Speed: ', speed)
+                print('Filtered Speed: ', filterd_y1[-1])
+
                 PubSpd.publish(speed)
                             
-                    
-## Selecting Left Leg
-    if (RKnee[2] <= LKnee[2]) : 
-        dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
-        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
-        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + '\n'
+    # dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+    # str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
+    # str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + str(mSPD) + '\n'
 
-    if (RKnee[2] > LKnee[2]) :
-        dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
-        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + \
-        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + '\n'
+    dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+    str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
+    str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' '  + '\n'
+
+## Selecting Left Leg
+    # if (RKnee[2] <= LKnee[2]) : 
+    #     dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+    #     str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
+    #     str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + '\n'
+
+    # if (RKnee[2] > LKnee[2]) :
+    #     dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+    #     str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + \
+    #     str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + '\n'
 
     file.write(dataStr)
 
