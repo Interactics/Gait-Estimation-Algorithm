@@ -1,6 +1,7 @@
 # Gait-Estimation-Algorithm
-For National Research Foundation of Korea.
-Human Gait Estimation Algorithm 
+This research is for Development of a Gait Estimation Algoritrhm for Handrail Mountabel Walking Aid Handles for the Elderly, National Research Foundation of Korea.
+
+
 # Node
 
 - rs_talker : publishing realsense image(color and depth)
