@@ -1,4 +1,6 @@
 # Gait-Estimation-Algorithm
+This research is for Development of a Gait Estimation Algoritrhm for Handrail Mountabel Walking Aid Handles for the Elderly, National Research Foundation of Korea.
+
 
 # Node
 
