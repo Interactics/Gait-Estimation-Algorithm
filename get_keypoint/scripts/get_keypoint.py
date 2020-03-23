@@ -72,18 +72,9 @@ def printLegPoint(keyPoint, timeInfo) :
     LKnee = pointDepthXYZ(keyPoint, 13)
     LAnkle = pointDepthXYZ(keyPoint, 14)
 
-
-
-## Selecting Left Leg
-    if (RKnee[2] <= LKnee[2]) : 
-        dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
-        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
-        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + '\n'
-
-    if (RKnee[2] > LKnee[2]) :
-        dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
-        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + \
-        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + '\n'
+    dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+    str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
+    str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + str(mSPD) + '\n'
 
     file.write(dataStr)
 
