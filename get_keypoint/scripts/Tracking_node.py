@@ -217,8 +217,8 @@ def printLegPoint(keyPoint, timeInfo) :
                 print("Filtered Speed(FULL DATA): ", filterd_y[-1])
                 if speed < 0.3 :
                     speed = 0
-                if speed > 1.4 :
-                    speed = 1.4
+                if speed > 2.0 :
+                    speed = 2.0
                 PubSpd.publish(speed)
                             
 
