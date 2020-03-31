@@ -87,7 +87,19 @@ def printLegPoint(keyPoint, timeInfo) :
     str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + str(mSPD) + '\n'
 
 
+## Selecting Left Leg
+    if (RKnee[2] <= LKnee[2]) : 
+        dataStr2 = str(TIME) + ' ' + str(MidHip) + ' ' + \
+        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
+        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + str(mSPD) + '\n'
+
+    if (RKnee[2] > LKnee[2]) :
+        dataStr2 = str(TIME) + ' ' + str(MidHip) + ' ' + \
+        str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + \
+        str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + str(mSPD) + '\n'
+
     file.write(dataStr)
+    file2.write(dataStr2) ## Controled
 
 
 # Returning Time of system's running.

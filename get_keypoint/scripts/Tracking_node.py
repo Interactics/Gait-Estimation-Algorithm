@@ -73,7 +73,7 @@ sess = tf.Session()
 graph = tf.get_default_graph()  
 set_session(sess)
 
-MODELFILE = os.path.dirname(os.path.realpath(__file__)) +'/../config/Gait_LSTM_model.h5'
+MODELFILE = os.path.dirname(os.path.realpath(__file__)) +'/../config/PowerSC_12D_70N.h5'
 model = load_model(MODELFILE)
 model.compile(loss='mean_squared_error', optimizer='adam')
 
@@ -83,8 +83,8 @@ print(model.summary())
 
 sc_x = MinMaxScaler(feature_range=(0, 1))
 sc_y = MinMaxScaler(feature_range=(0, 1))
-Xsc_ = [[76.68918234,   67.08620117, -1496.91313308],
-        [ 178.85618721, 152.72581815, 1201.76893437]]
+Xsc_ = [[25.50388519,   67.08620117, -2024.91313308],
+        [ 178.85618721, 152.72581815, 1807.78037458]]
 Ysc_ = [[-2.24800694], 
         [4.12432266]]
 sc_x.fit(np.array(Xsc_))
@@ -116,6 +116,9 @@ def callback1(data) :
         printLegPoint(keypointList,timeInfo)
     except:
         print('OOPS! No man is detected!')
+        speed = 0
+        PubSpd.publish(speed)
+
 
     # print (pointDepthXYZ(keypointList, 0))
 
@@ -203,16 +206,19 @@ def printLegPoint(keyPoint, timeInfo) :
 
             ### Butterworth Filter ###
             
-            if (data_vel.shape[0] >= 13) : 
+            if (data_vel.shape[0] >= 16) : 
                 b, a = signal.butter(3, 0.01) ## Butterworth Filter 
                 filterd_y = signal.filtfilt(b, a, data_vel) ## Filter
-                filterd_y1 = signal.filtfilt(b, a, data_vel[-13:]) ## Filtering with last 13 data
+                filterd_y1 = signal.filtfilt(b, a, data_vel[-20:]) ## Filtering with last 13 data
 
-                speed = filterd_y[-1]
+                speed = filterd_y1[-1]
                 #data_vel = data_vel[:-1]
                 print("Filtered Speed(LAST 12)  : ", speed)
-                print("Filtered Speed(FULL DATA): ", filterd_y1[-1])
-
+                print("Filtered Speed(FULL DATA): ", filterd_y[-1])
+                if speed < 0.3 :
+                    speed = 0
+                if speed > 1.4 :
+                    speed = 1.4
                 PubSpd.publish(speed)
                             
 
