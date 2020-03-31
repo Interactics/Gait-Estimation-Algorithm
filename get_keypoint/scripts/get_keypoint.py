@@ -81,6 +81,7 @@ def printLegPoint(keyPoint, timeInfo) :
     LKnee = pointDepthXYZ(keyPoint, 13)
     LAnkle = pointDepthXYZ(keyPoint, 14)
 
+<<<<<<< HEAD
 
     dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
     str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
@@ -97,6 +98,11 @@ def printLegPoint(keyPoint, timeInfo) :
         dataStr2 = str(TIME) + ' ' + str(MidHip) + ' ' + \
         str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + \
         str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + str(mSPD) + '\n'
+=======
+    dataStr = str(TIME) + ' ' + str(MidHip) + ' ' + \
+    str(RHip) + ' ' + str(RKnee) + ' ' + str(RAnkle) + ' ' + \
+    str(LHip) + ' ' + str(LKnee) + ' ' + str(LAnkle) + ' ' + str(mSPD) + '\n'
+>>>>>>> 04299c816ce4f3e46af3f4b2f8d4ee25d83940ed
 
     file.write(dataStr)
     file2.write(dataStr2) ## Controled
